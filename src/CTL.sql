@@ -99,7 +99,7 @@ BEGIN
      numrange(txid_log_id, NULL, '(]'));
 
   -- create event trigger to log schema changes
-  PERFORM pgmemento.create_schema_event_trigger($6);
+  PERFORM pgmemento.create_schema_event_trigger($6, FALSE);
 
   -- start auditing for tables in given schema'
   PERFORM pgmemento.create_schema_audit(pgmemento.trim_outer_quotes($1), $2, $3, $4, $5, $6, $7);
@@ -115,7 +115,8 @@ CREATE OR REPLACE FUNCTION pgmemento.reinit(
   log_old_data BOOLEAN DEFAULT TRUE,
   log_new_data BOOLEAN DEFAULT FALSE,
   trigger_create_table BOOLEAN DEFAULT FALSE,
-  except_tables TEXT[] DEFAULT '{}'
+  except_tables TEXT[] DEFAULT '{}',
+  skip_schema_event_triggers BOOLEAN DEFAULT FALSE
   ) RETURNS TEXT AS
 $$
 DECLARE
@@ -159,7 +160,7 @@ BEGIN
       'default_log_new_data', $4,
       'trigger_create_table', $5,
       'except_tables', $6)::text
-    || '}', 
+    || '}',
     TRUE
   );
   txid_log_id := pgmemento.log_transaction(txid_current());
@@ -212,12 +213,12 @@ BEGIN
     PERFORM pgmemento.log_table_event(rec.table_name, rec.schema_name, 'REINIT TABLE');
 
     -- recreate auditing
-    PERFORM pgmemento.create_table_audit(rec.table_name, rec.schema_name, $2, $3, $4, FALSE);
+    PERFORM pgmemento.create_table_audit(rec.table_name, rec.schema_name, $2, $3, $4, FALSE, $7);
   END LOOP;
 
   -- update event triggers
   IF $5 != current_audit_schema_log.trigger_create_table THEN
-    PERFORM pgmemento.create_schema_event_trigger($5);
+    PERFORM pgmemento.create_schema_event_trigger($5, $7);
   END IF;
 
   RETURN format('pgMemento is reinitialized for %s schema.', schema_quoted);
@@ -231,7 +232,8 @@ CREATE OR REPLACE FUNCTION pgmemento.start(
   log_old_data BOOLEAN DEFAULT TRUE,
   log_new_data BOOLEAN DEFAULT FALSE,
   trigger_create_table BOOLEAN DEFAULT FALSE,
-  except_tables TEXT[] DEFAULT '{}'
+  except_tables TEXT[] DEFAULT '{}',
+  skip_schema_event_triggers BOOLEAN DEFAULT FALSE
   ) RETURNS TEXT AS
 $$
 DECLARE
@@ -301,7 +303,7 @@ BEGIN
      OR current_audit_schema_log.default_log_new_data != $4
      OR current_audit_schema_log.trigger_create_table != $5
   THEN
-    PERFORM pgmemento.reinit($1, $2, $3, $4, $5, $6);
+    PERFORM pgmemento.reinit($1, $2, $3, $4, $5, $6, $7);
     reinit_test := ' and reinitialized';
   END IF;
 
