@@ -1285,7 +1285,7 @@ CREATE OR REPLACE FUNCTION pgmemento.create_table_audit(
   log_old_data BOOLEAN DEFAULT TRUE,
   log_new_data BOOLEAN DEFAULT FALSE,
   log_state BOOLEAN DEFAULT FALSE,
-  skip_schema_event_triggers boolean DEFAULT false
+  skip_schema_event_triggers BOOLEAN DEFAULT FALSE
   ) RETURNS SETOF VOID AS
 $$
 DECLARE

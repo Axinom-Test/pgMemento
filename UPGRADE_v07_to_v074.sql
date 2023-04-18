@@ -164,7 +164,7 @@ CREATE OR REPLACE FUNCTION pgmemento.start(
   log_new_data BOOLEAN DEFAULT FALSE,
   trigger_create_table BOOLEAN DEFAULT FALSE,
   except_tables TEXT[] DEFAULT '{}',
-  skip_schema_event_triggers boolean DEFAULT false
+  skip_schema_event_triggers BOOLEAN DEFAULT FALSE
   ) RETURNS TEXT AS
 $$
 DECLARE
