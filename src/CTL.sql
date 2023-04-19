@@ -51,7 +51,8 @@ CREATE OR REPLACE FUNCTION pgmemento.init(
   log_new_data BOOLEAN DEFAULT FALSE,
   log_state BOOLEAN DEFAULT FALSE,
   trigger_create_table BOOLEAN DEFAULT FALSE,
-  except_tables TEXT[] DEFAULT '{}'
+  except_tables TEXT[] DEFAULT '{}',
+  skip_schema_event_triggers BOOLEAN DEFAULT FALSE
   ) RETURNS TEXT AS
 $$
 DECLARE
@@ -99,7 +100,7 @@ BEGIN
      numrange(txid_log_id, NULL, '(]'));
 
   -- create event trigger to log schema changes
-  PERFORM pgmemento.create_schema_event_trigger($6, FALSE);
+  PERFORM pgmemento.create_schema_event_trigger($6, $8);
 
   -- start auditing for tables in given schema'
   PERFORM pgmemento.create_schema_audit(pgmemento.trim_outer_quotes($1), $2, $3, $4, $5, $6, $7);
